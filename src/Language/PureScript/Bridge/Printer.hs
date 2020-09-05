@@ -137,7 +137,7 @@ instances settings st@(SumType t _ is) = map go is
       where
         encodeOpts = case Switches.generateForeign settings of
                       Nothing -> ""
-                      Just fopts -> " { unwrapSingleConstructors = " <> (T.toLower . T.pack . show . Switches.unwrapSingleConstructors) fopts <> " }"
+                      Just fopts -> " { unwrapSingleConstructors = " <> (T.toLower . T.pack . Prelude.show . Switches.unwrapSingleConstructors) fopts <> " }"
         stpLength = length sumTypeParameters
         extras | stpLength == 0 = mempty
                | otherwise = bracketWrap constraintsInner <> " => "
@@ -150,7 +150,7 @@ instances settings st@(SumType t _ is) = map go is
       where
         decodeOpts = case Switches.generateForeign settings of
                       Nothing -> ""
-                      Just fopts -> " { unwrapSingleConstructors = " <> (T.toLower . T.pack . show . Switches.unwrapSingleConstructors) fopts <> " }"
+                      Just fopts -> " { unwrapSingleConstructors = " <> (T.toLower . T.pack . Prelude.show . Switches.unwrapSingleConstructors) fopts <> " }"
         stpLength = length sumTypeParameters
         extras | stpLength == 0 = mempty
                | otherwise = bracketWrap constraintsInner <> " => "
@@ -158,8 +158,18 @@ instances settings st@(SumType t _ is) = map go is
         constraintsInner = T.intercalate ", " $ map instances sumTypeParameters
         instances params = genericInstance settings params <> ", " <> decodeInstance params
         bracketWrap x = "(" <> x <> ")"
+    go Show = "instance show" <> _typeName t <> " :: " <> extras <> "Show " <> typeInfoToText False t <> " where\n" <>
+              "  show x = genericShow x"
+        where
+          stpLength = length sumTypeParameters
+          extras | stpLength == 0 = mempty
+                | otherwise = bracketWrap constraintsInner <> " => "
+          sumTypeParameters = filter (isTypeParam t) . Set.toList $ getUsedTypes st
+          constraintsInner = T.intercalate ", " $ map instances sumTypeParameters
+          instances params = genericInstance settings params <> ", " <> decodeInstance params
+          bracketWrap x = "(" <> x <> ")"
     go i = "derive instance " <> T.toLower c <> _typeName t <> " :: " <> extras i <> c <> " " <> typeInfoToText False t <> postfix i
-      where c = T.pack $ show i
+      where c = T.pack $ Prelude.show i
             extras Generic | stpLength == 0 = mempty
                            | stpLength == 1 = genericConstraintsInner <> " => "
                            | otherwise      = bracketWrap genericConstraintsInner <> " => "
