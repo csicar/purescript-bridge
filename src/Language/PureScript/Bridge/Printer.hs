@@ -62,6 +62,7 @@ moduleToText settings m = T.unlines $
   : map importLineToText allImports
   <> [ ""
      , "import Prelude"
+     , "import Data.Generic.Rep.Show (genericShow)"
      , ""
      ]
   <> map (sumTypeToText settings) (psTypes m)
